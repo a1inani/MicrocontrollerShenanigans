@@ -1,4 +1,4 @@
-##Raspberry Pi Pico + ESP8285
+## Raspberry Pi Pico + ESP8285
 
 Catalogues the process of figuring out how this unique chip works.
 
