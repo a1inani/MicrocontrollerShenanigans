@@ -1,4 +1,4 @@
-## Raspberry Pi Pico + ESP8285
+# Raspberry Pi Pico + ESP8285
 
 Catalogues the process of figuring out how this unique chip works.
 
@@ -11,3 +11,9 @@ While it has an RP2040, the eagle-eyed among you will notice that it makes use o
 All hope is not lost though. Chips that have some sort of network functionality provide mechanisms through which other chips can communicate with them and generally control their behaviour. 
 
 After a bit of Googling, I found a link (https://mega.nz/folder/1TQ1mCgB#08XOqEZgDEoZkZh1CIOP-A) from a Chinese vendor of similar boards, containing some sample code that I have uploaded in the named folder.
+
+## Firmware
+
+## Sample Code
+
+## My Code
