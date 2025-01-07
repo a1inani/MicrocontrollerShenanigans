@@ -1,20 +1,16 @@
-# Raspberry Pi Pico 2W (07 January 2025)
+# Raspberry Pi Pico W (07 January 2025)
 
 This document details the process of understanding and working with this unique chip.
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Hardware](#hardware)
 - [Software](#software)
-- [Setup](#setup)
+- [Setup](#software)
 - [Contributing](#contributing)
 - [License](#license)
 
 
 ## Introduction
-
-
-## Hardware
 
 
 ## Software

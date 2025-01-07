@@ -6,7 +6,7 @@ This document details the process of understanding and working with this unique 
 - [Introduction](#introduction)
 - [Hardware](#hardware)
 - [Software](#software)
-- [Setup](#software)
+- [Setup](#setup)
 - [Contributing](#contributing)
 - [License](#license)
 

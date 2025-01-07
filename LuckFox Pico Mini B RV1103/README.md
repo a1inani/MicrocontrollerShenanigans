@@ -1,4 +1,4 @@
-# Raspberry Pi Pico 2W (07 January 2025)
+# LuckFox Pico Mini B RV1103 (07 January 2025)
 
 This document details the process of understanding and working with this unique chip.
 
@@ -18,8 +18,7 @@ This document details the process of understanding and working with this unique 
 
 
 ## Software
-- Programming Language: [MicroPython](https://micropython.org/)
-- IDE: [Visual Studio Code](https://code.visualstudio.com/)
+
 
 ## Setup
 1. Clone the repository:
