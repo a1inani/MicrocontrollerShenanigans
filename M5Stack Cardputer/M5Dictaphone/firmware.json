@@ -1,0 +1,21 @@
+{
+     "name": "M5Dictaphone",
+     "version": "1.0.0",
+     "description": "Dictaphone firmware for M5Stack Cardputer with SD card recording",
+     "author": "a1inani",
+     "chip": "esp32s3",
+     "files": [
+       {
+         "address": "0x0000",
+         "file": "bootloader.bin"
+       },
+       {
+         "address": "0x8000",
+         "file": "partitions.bin"
+       },
+       {
+         "address": "0x10000",
+         "file": "firmware.bin"
+       }
+     ]
+   }
