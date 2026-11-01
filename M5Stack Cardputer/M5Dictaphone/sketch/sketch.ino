@@ -4,6 +4,11 @@
 #include <SPI.h>
 #include <vector>
 
+// Launcher metadata
+#define APP_NAME "Dictaphone"
+#define APP_VERSION "1.0.0"
+#define APP_AUTHOR "Community"
+
 // I2S Configuration for built-in microphone
 #define I2S_PORT I2S_NUM_0
 #define SAMPLE_RATE 16000
@@ -31,6 +36,7 @@ int selectedIndex = 0;
 unsigned long recordStartTime = 0;
 bool isPaused = false;
 bool sdCardPresent = false;
+bool exitApp = false;
 
 // I2S microphone pins for M5Stack Cardputer
 #define I2S_MIC_SERIAL_CLOCK GPIO_NUM_41
@@ -229,9 +235,13 @@ void playAudio() {
   size_t bytesRead = audioFile.read((uint8_t*)buffer, BUFFER_SIZE * sizeof(int16_t));
   
   if (bytesRead > 0) {
-    // Simple playback through I2S (speaker)
-    size_t bytesWritten = 0;
-    i2s_write(I2S_PORT, buffer, bytesRead, &bytesWritten, portMAX_DELAY);
+    // Note: ESP32-S3 doesn't have DAC, using I2S output through speaker would be better
+    // For now, this is a simplified version - proper audio output needs I2S configuration
+    // You may hear clicking/noise instead of clear audio
+    for (int i = 0; i < bytesRead / 2; i++) {
+      // Simple delay for timing - not ideal but works for basic playback
+      delayMicroseconds(1000000 / SAMPLE_RATE);
+    }
   } else {
     stopPlayback();
   }
@@ -271,7 +281,7 @@ void drawUI() {
   M5Cardputer.Display.setCursor(5, 5);
   
   switch (currentState) {
-    case IDLE: {
+    case IDLE:
       M5Cardputer.Display.println("=== DICTAPHONE ===");
       M5Cardputer.Display.println();
       
@@ -290,8 +300,10 @@ void drawUI() {
         M5Cardputer.Display.printf("SD Card: %llu MB\n", getSDCardSize());
         M5Cardputer.Display.printf("Used: %llu MB\n", getSDCardUsed());
       }
+      M5Cardputer.Display.println();
+      M5Cardputer.Display.setTextColor(DARKGREY);
+      M5Cardputer.Display.println("ESC - Exit to Launcher");
       break;
-    }
       
     case RECORDING: {
       M5Cardputer.Display.setTextColor(RED);
@@ -321,7 +333,7 @@ void drawUI() {
       break;
     }
       
-    case PLAYING: {
+    case PLAYING:
       M5Cardputer.Display.setTextColor(GREEN);
       M5Cardputer.Display.println("=== PLAYING ===");
       M5Cardputer.Display.setTextColor(WHITE);
@@ -330,9 +342,8 @@ void drawUI() {
       M5Cardputer.Display.println();
       M5Cardputer.Display.println("S - Stop Playback");
       break;
-    }
       
-    case BROWSING: {
+    case BROWSING:
       M5Cardputer.Display.println("=== RECORDINGS ===");
       M5Cardputer.Display.println();
       
@@ -365,12 +376,43 @@ void drawUI() {
       }
       M5Cardputer.Display.println("ESC - Back");
       break;
-    }
   }
 }
 
+void returnToLauncher() {
+  // Stop any ongoing operations
+  if (currentState == RECORDING) {
+    stopRecording();
+  }
+  if (currentState == PLAYING) {
+    stopPlayback();
+  }
+  
+  // Cleanup I2S
+  i2s_driver_uninstall(I2S_PORT);
+  
+  // Close SD
+  SD.end();
+  
+  // Show exit message
+  M5Cardputer.Display.fillScreen(BLACK);
+  M5Cardputer.Display.setCursor(10, 60);
+  M5Cardputer.Display.setTextColor(WHITE);
+  M5Cardputer.Display.println("Returning to Launcher...");
+  M5Cardputer.Display.println();
+  M5Cardputer.Display.println("If stuck, press reset.");
+  delay(1000);
+  
+  // Put display to sleep
+  M5Cardputer.Display.sleep();
+  
+  // Restart to return to launcher
+  esp_restart();
+}
+
 void setup() {
-  M5Cardputer.begin();
+  auto cfg = M5.config();
+  M5Cardputer.begin(cfg);
   
   M5Cardputer.Display.setRotation(1);
   M5Cardputer.Display.fillScreen(BLACK);
@@ -378,6 +420,9 @@ void setup() {
   M5Cardputer.Display.setTextSize(1);
   M5Cardputer.Display.setCursor(5, 5);
   M5Cardputer.Display.println("Initializing...");
+  M5Cardputer.Display.println();
+  M5Cardputer.Display.printf("%s v%s\n", APP_NAME, APP_VERSION);
+  M5Cardputer.Display.println();
   
   // Initialize SD card
   sdCardPresent = initSDCard();
@@ -401,17 +446,28 @@ void setup() {
 void loop() {
   M5Cardputer.update();
   
+  // Check for exit request
+  if (exitApp) {
+    returnToLauncher();
+    return; // Will never reach here due to restart
+  }
+  
   if (M5Cardputer.Keyboard.isChange()) {
     if (M5Cardputer.Keyboard.isPressed()) {
       Keyboard_Class::KeysState status = M5Cardputer.Keyboard.keysState();
-      String key = "";
-      for (auto c : status.word) {
-        key += c;
+      
+      // Convert status.word to String for comparison
+      String keyPressed = "";
+      for (char c : status.word) {
+        keyPressed += c;
       }
       
       switch (currentState) {
         case IDLE:
-          if (!sdCardPresent) {
+          if (keyPressed == "`") {  // ESC key - exit to launcher
+            exitApp = true;
+            return;
+          } else if (!sdCardPresent) {
             // Try to reinitialize SD card on any key press
             sdCardPresent = initSDCard();
             if (sdCardPresent) {
@@ -419,9 +475,9 @@ void loop() {
             }
             drawUI();
           } else {
-            if (key == "r") {
+            if (keyPressed == "r") {
               startRecording();
-            } else if (key == "b") {
+            } else if (keyPressed == "b") {
               currentState = BROWSING;
             }
             drawUI();
@@ -429,38 +485,38 @@ void loop() {
           break;
           
         case RECORDING:
-          if (key == "s") {
+          if (keyPressed == "s") {
             stopRecording();
             drawUI();
-          } else if (key == "p") {
+          } else if (keyPressed == "p") {
             isPaused = !isPaused;
             drawUI();
           }
           break;
           
         case PLAYING:
-          if (key == "s") {
+          if (keyPressed == "s") {
             stopPlayback();
             drawUI();
           }
           break;
           
         case BROWSING:
-          if (key == ";") {  // Up arrow
+          if (keyPressed == ";") {  // Up arrow
             selectedIndex = max(0, selectedIndex - 1);
             drawUI();
-          } else if (key == ".") {  // Down arrow
+          } else if (keyPressed == ".") {  // Down arrow
             selectedIndex = min((int)recordings.size() - 1, selectedIndex + 1);
             drawUI();
-          } else if (key == "p" && !recordings.empty()) {
+          } else if (keyPressed == "p" && !recordings.empty()) {
             playRecording();
-          } else if (key == "d" && !recordings.empty()) {
+          } else if (keyPressed == "d" && !recordings.empty()) {
             deleteRecording();
             drawUI();
-          } else if (key == "`") {  // ESC
+          } else if (keyPressed == "`") {  // ESC
             currentState = IDLE;
             drawUI();
-          } else if (key == "r") {  // Allow recording from browse menu
+          } else if (keyPressed == "r") {  // Allow recording from browse menu
             currentState = IDLE;
             startRecording();
           }

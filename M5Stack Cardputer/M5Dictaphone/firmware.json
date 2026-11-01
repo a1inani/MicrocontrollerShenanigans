@@ -7,15 +7,15 @@
      "files": [
        {
          "address": "0x0000",
-         "file": "bootloader.bin"
+         "file": "sketch.ino.bootloader.bin"
        },
        {
          "address": "0x8000",
-         "file": "partitions.bin"
+         "file": "sketch.ino.partitions.bin"
        },
        {
          "address": "0x10000",
-         "file": "firmware.bin"
+         "file": "sketch.ino.bin"
        }
      ]
    }
